@@ -58,6 +58,7 @@ bool ParticleSystem::SetComputerShader(const std::string &shaderPath)
 	if (!b) 
 	{
 		qDebug() << mComputeShaderProgram.log();
+		assert(b);
 	}
 
 	return b;
@@ -90,12 +91,15 @@ uint32_t ParticleSystem::ParticlesCount()
 	return mParticleCount;
 }
 
-void ParticleSystem::Compute()
+void ParticleSystem::Compute(float time)
 {
 	mComputeShaderProgram.bind();
 
 	GLint parcLoc = glGetUniformLocation(mComputeShaderProgram.programId(), "particleCount");
 	glUniform1i(parcLoc, mParticleCount);
+
+	GLint curTickLoc = glGetUniformLocation(mComputeShaderProgram.programId(), "curTick");
+	glUniform1f(curTickLoc, time);
 
 	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, mGlAtomicCounter);
 	glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, mGlAtomicCounter);
@@ -107,9 +111,15 @@ void ParticleSystem::Compute()
 	GLuint x = static_cast<GLuint>(::ceil(n));
 	glDispatchCompute(x, 1, 1);
 
+	GLint preTickLoc = glGetUniformLocation(mComputeShaderProgram.programId(), "preTick");
+	glUniform1f(preTickLoc, time);
+
 	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, mGlAtomicCounter);
-	GLuint *uCounter = reinterpret_cast<GLuint*>(glMapBuffer(GL_ATOMIC_COUNTER_BUFFER, GL_READ_ONLY));
+	GLuint *uCounter = reinterpret_cast<GLuint*>(glMapBuffer(GL_ATOMIC_COUNTER_BUFFER, GL_READ_WRITE));
+	
 	glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+	glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 Particle* ParticleSystem::Map()

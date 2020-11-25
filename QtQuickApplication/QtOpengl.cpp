@@ -1,32 +1,12 @@
 #include "QtOpengl.h"
 
-static const char* VERTEX_SHADER_CODE =
-"#version 330 \n"
-"layout(location = 0) in vec3 posVertex;\n"
-"void main() {\n"
-"  gl_Position = vec4(posVertex, 1.0f);\n"
-"}\n";
-
-static const char* FRAGMENT_SHADER_CODE =
-"#version 330\n"
-"out vec4 fragColor;\n"
-"void main() {\n"
-"  fragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);\n"
-"}\n";
-
-static const GLfloat VERTEX_DATA[] = {
-	-0.5f, -0.5f, 0.0f,
-	0.5f, -0.5f, 0.0f,
-	-0.5f, 0.5f, 0.0f
-};
-
 QtOpengl::QtOpengl(QWidget *parent)
 	: QOpenGLWidget(parent),
 	mVAO(0),
 	mVBO(0)
 {
 	ui.setupUi(this);
-
+	mTimer.Start();
 }
 
 QtOpengl::~QtOpengl()
@@ -53,9 +33,9 @@ void QtOpengl::initializeGL()
 	assert(b);
 
 	mParticleSys.Init();
-	mParticleSys.ResetParticles(4096);
+	mParticleSys.ResetParticles(1024);
 	mParticleSys.SetComputerShader("Particle.glsl");
-	mParticleSys.Compute();
+	mParticleSys.Compute(mTimer.Now());
 
 	Particle* particles = mParticleSys.Map();
 	glGenVertexArrays(1, &mVAO);
@@ -82,8 +62,6 @@ void QtOpengl::initializeGL()
 
 	mParticleSys.Unmap();
 
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
 }
 
 void QtOpengl::resizeGL(int w, int h)
@@ -93,15 +71,34 @@ void QtOpengl::resizeGL(int w, int h)
 
 void QtOpengl::paintGL()
 {
-	glClearColor(1.f, 1.f, 1.f, 1.f);
+	glClearColor(0.f, 0.f, 0.f, 0.f);
 	glClear(GL_COLOR_BUFFER_BIT);
+	
+	mParticleSys.Compute(mTimer.Now());
+	Particle* particles = mParticleSys.Map();
+	uint32_t parCount = mParticleSys.ParticlesCount();
+	uint32_t parBufferSize = parCount * sizeof(Particle);
+
+	glBindVertexArray(mVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, mVBO);
+	glBufferData(GL_ARRAY_BUFFER, parBufferSize, particles, GL_DYNAMIC_DRAW);
 
 	mShaderProgram.bind();
-	glBindVertexArray(mVAO);
 
 	glPointSize(2.0f);
-	glDrawArrays(GL_POINTS, 0, mParticleSys.ParticlesCount());
+	glDrawArrays(GL_LINES, 0, mParticleSys.ParticlesCount());
 
-	//glDrawArrays(GL_TRIANGLES, 0, 3);
+	mParticleSys.Unmap();
+}
 
+void QtOpengl::mousePressEvent(QMouseEvent* e)
+{
+	if (mTimer.Running()) 
+	{
+		mTimer.Stop();
+	}
+	else 
+	{
+		mTimer.Start();
+	}
 }

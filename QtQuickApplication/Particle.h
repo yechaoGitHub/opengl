@@ -15,6 +15,7 @@ public:
 	float							age;
 	float							life;
 	float							size;
+	float							angle;
 	uint32_t						state;
 };
 

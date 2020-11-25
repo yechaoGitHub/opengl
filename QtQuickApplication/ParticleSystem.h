@@ -17,7 +17,7 @@ public:
 	void AddParticle(const Particle &particle);
 	void ResetParticles(uint32_t nums);
 	uint32_t ParticlesCount();
-	void Compute();
+	void Compute(float time);
 	Particle* Map();
 	void Unmap();
 

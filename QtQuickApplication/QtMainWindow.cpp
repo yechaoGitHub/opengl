@@ -9,14 +9,22 @@ QtMainWindow::QtMainWindow(QWidget *parent)
 	mCentralWidget = new QWidget(this);
 	mGlWidget = new QtOpengl(mCentralWidget);
 	this->setCentralWidget(mCentralWidget);
+
+	QObject::connect(&mTimer, &QTimer::timeout, this, &QtMainWindow::Tick);
+	mTimer.start(1000 / 60);
 }
 
 QtMainWindow::~QtMainWindow()
 {
 }
 
-
 void QtMainWindow::resizeEvent(QResizeEvent *event)
 {	
 	mGlWidget->resize(event->size());
 }
+
+void QtMainWindow::Tick()
+{
+	mGlWidget->update();
+}
+

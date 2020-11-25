@@ -4,6 +4,7 @@
 #include <QDebug>
 #include <QOpenGLFunctions_4_3_Core>
 #include <QOpenGLShaderProgram>
+#include "GlTimer.h"
 #include "ParticleSystem.h"
 #include "ui_QtOpengl.h"
 
@@ -19,9 +20,11 @@ protected:
 	void initializeGL() override;
 	void resizeGL(int w, int h) override;
 	void paintGL() override;
+	void mousePressEvent(QMouseEvent* e) override;
 
 private:
 	Ui::QtOpengl			ui;
+	GlTimer					mTimer;
 	ParticleSystem			mParticleSys;
 	GLuint					mVAO, mVBO;
 	QOpenGLShaderProgram	mShaderProgram;
