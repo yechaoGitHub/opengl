@@ -57,8 +57,8 @@ float rand11(float n)
 
 vec3 rand13(float n)
 {
-	float v1 = rand11(n);
-	float v2 = rand11(n * 5.3214);
+	float v1 = rand11(n * 7.543654);
+	float v2 = rand11(n * 5.3214123);
 	float v3 = rand11(n * 2.32436);
 
 	return vec3(v1, v2, v3);
@@ -102,7 +102,7 @@ Particle InitParticle(float seed)
 {
 	Particle particle;
 
-	particle.position = StToUv(rand13(seed));
+	particle.position = rand13(seed);
 	particle.velocity = StToUv(rand13(seed + 0.96214));
 	particle.acceleration = rand13(seed + 0.6244);
 	particle.color = rand13(seed + 0.4567);
@@ -140,25 +140,22 @@ vec2 CalculateVelocity(float angle, float vr, float ar)
 
 void main() 
 {
-	uint index = gl_GlobalInvocationID.x * 2;
+	uint index = gl_GlobalInvocationID.x;
 	if (index >= particleCount)
 	{
 		return;
 	}
 
 	Particle particle = particlesBuffer.particles[index];
-	particlesBuffer.particles[index + 1] = particle;
-
 	float tickInterval = curTick - preTick;
 
 	if(particle.state == _STATE_INIT_)
 	{
 		particle = InitParticle(index + curTick);
-		particlesBuffer.particles[index + 1] = particle;
 	}
 	else 
 	{
-		vec2 uv = (vec2(particle.position.x, particle.position.y) + vec2(1.5, -0.5)) + curTick * 0.1;
+		vec2 uv = vec2(particle.position.x, particle.position.y);
 		vec2 seed = vec2(uv);
 
 		particle.angle += StToUv(fbm(seed));
@@ -167,9 +164,7 @@ void main()
 
 		if (abs(particle.position.x) > 1.0 || abs(particle.position.y) > 1.0)
 		{
-			//particle.state = _STATE_INIT_;
 			particle = ClearParticle();
-			particlesBuffer.particles[index + 1] = ClearParticle();
 		}
 	}
 

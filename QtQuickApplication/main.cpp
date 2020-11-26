@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
 	QtMainWindow window;
 
-    window.resize(QSize(800, 600));
+    window.resize(QSize(658, 851));
 	window.show();
 
     return app.exec();

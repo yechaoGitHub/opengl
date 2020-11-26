@@ -4,11 +4,15 @@ layout(location = 1) in vec3 velocity;
 layout(location = 2) in vec3 acceleration;
 layout(location = 3) in vec3 color;
 
+out vec3 outPosition;
 out vec3 outColor;
 
 void main() 
 {
+	outPosition = position;
 	outColor = color;
-	gl_Position = vec4(position.xy, 1.0, 1.0);
+
+	vec2 pos = (position.xy - 0.5) * 2.0;
+	gl_Position = vec4(pos, 1.0, 1.0);
 }
 

@@ -61,15 +61,33 @@
     <ClInclude Include="Particle.h">
       <Filter>Particle</Filter>
     </ClInclude>
-    <ClInclude Include="ParticleSystem.h">
+    <ClInclude Include="GlUtil.h">
       <Filter>Particle</Filter>
     </ClInclude>
-    <ClInclude Include="GlUtil.h">
+    <ClInclude Include="GlTimer.h">
+      <Filter>Particle</Filter>
+    </ClInclude>
+    <ClInclude Include="ImageFade.h">
+      <Filter>Particle</Filter>
+    </ClInclude>
+    <ClInclude Include="WindField.h">
+      <Filter>Particle</Filter>
+    </ClInclude>
+    <ClInclude Include="ParticleSystem.h">
       <Filter>Particle</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="GlTimer.cpp">
+      <Filter>Particle</Filter>
+    </ClCompile>
+    <ClCompile Include="ImageFade.cpp">
+      <Filter>Particle</Filter>
+    </ClCompile>
+    <ClCompile Include="WindField.cpp">
+      <Filter>Particle</Filter>
+    </ClCompile>
     <ClCompile Include="ParticleSystem.cpp">
       <Filter>Particle</Filter>
     </ClCompile>
@@ -82,6 +100,15 @@
       <Filter>GLSL</Filter>
     </None>
     <None Include="Fragment.glsl">
+      <Filter>GLSL</Filter>
+    </None>
+    <None Include="ImageVertex.glsl">
+      <Filter>GLSL</Filter>
+    </None>
+    <None Include="ImageFragment.glsl">
+      <Filter>GLSL</Filter>
+    </None>
+    <None Include="ImageFade.glsl">
       <Filter>GLSL</Filter>
     </None>
   </ItemGroup>

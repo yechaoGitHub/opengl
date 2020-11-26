@@ -26,7 +26,8 @@ private:
 	Ui::QtOpengl			ui;
 	GlTimer					mTimer;
 	ParticleSystem			mParticleSys;
-	GLuint					mVAO, mVBO;
+	GLuint					mVAO, mVBO, mTex, mImageVAO, mImageVBO, mImageEBO;
 	QOpenGLShaderProgram	mShaderProgram;
+	QOpenGLShaderProgram	mImageProgram;
 
 };

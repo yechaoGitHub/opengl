@@ -1,13 +1,15 @@
 #version 330
 
 in vec3 outColor;
-out vec3 fragColor;
+in vec3 outPosition;
+out vec4 fragColor;
 
-
-uniform 
+uniform sampler2D tex;
 
 void main() 
 {
-	fragColor = vec4(outColor, 1.0f);
+	vec2 texCrood = vec2(outPosition.x, 1.0 - outPosition.y);
+	vec4 color = texture(tex, texCrood);
+	fragColor = vec4(color.bgr, 1.0f);
 };
 

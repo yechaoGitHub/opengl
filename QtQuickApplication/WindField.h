@@ -11,23 +11,21 @@ public:
 	ParticleSystem();
 	~ParticleSystem();
 
-	virtual bool Init();
-	virtual void ShutDown();
-	virtual bool SetComputerShader(const std::string& shaderPath);
-	virtual void AddParticle(const Particle& particle);
-	virtual void ResetParticles(uint32_t nums);
-	virtual uint32_t ParticlesCount();
-	virtual void Compute();
-	virtual Particle* Map();
-	virtual void Unmap();
-
-	GLuint ProgrmaID();
-	void UseProgrma();
-	void ReleaseProgma();
+	bool Init();
+	void ShutDown();
+	bool SetComputerShader(const std::string &shaderPath);
+	void AddParticle(const Particle &particle);
+	void ResetParticles(uint32_t nums);
+	uint32_t ParticlesCount();
+	void Compute(float time);
+	Particle* Map();
+	void Unmap();
 
 private:
 	QOpenGLShaderProgram	mComputeShaderProgram;
 	GLuint					mGlParticleBuffer;
+	GLuint					mGlAtomicCounter;
 	uint32_t				mGlParticleCount;
 	uint32_t				mParticleCount;
 };
+
