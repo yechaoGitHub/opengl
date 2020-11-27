@@ -34,18 +34,30 @@ layout(binding = 0) buffer particlesBlock
 	Particle particles[];
 }particlesBuffer;
 
+layout(binding = 1) buffer indexBlock
+{
+	uint indices[];
+}indicesBuffer;
+
+layout(binding = 2) uniform atomic_uint atomicCounter;
+
+uniform float startTick;
 uniform float curTick;
 uniform float preTick;
-uniform int particleCount;
-float tickInterval = curTick - preTick;
 
-uniform int width;
-uniform int height;
+uniform uint particleCount;
 
-Particle InitializeParticle(vec2 location) 
+uniform uint width;
+uniform uint height;
+
+Particle InitializeParticle(uint x , uint y) 
 {
-	vec2 imageSize(width, height);
-	vec2 stlocation = location / imageSize;
+	float fWidth = float(width);
+	float fHeight = float(height);
+	float fX = float(x);
+	float fY = float(y);
+
+	vec2 stlocation = vec2(fX / fWidth, fY / fHeight);
 
 	Particle particle;
 	particle.position = vec3(stlocation, 1.0);
@@ -68,26 +80,45 @@ vec2 CalculateVelocity(float angle, float vr, float ar)
 	return vec2(vr * cos(angle * ar), vr * clamp(0.0, 1.0, sin(angle * ar)));
 }
 
+#define curParticle particlesBuffer.particles[0]
+
+float tickInterval = curTick - preTick;
+float passTick = curTick - startTick;
+float totalTime = 3.0;
+
+
 void main()
 {
-	int x = gl_GlobalInvocationID.x;
-	int y = gl_GlobalInvocationID.y;
+	uint counter = atomicCounterIncrement(atomicCounter);
 
-	if (x >= width || y >= height) return;
+	//uint x = gl_GlobalInvocationID.x;
+	//uint y = gl_GlobalInvocationID.y;
 
-	int index = x + y * height;
-	Particle par = particlesBuffer.particles[index];
+	//if (x >= width || y >= height) return;
 
-	if (par.state == _STATE_INIT_) 
-	{
-		par = InitializeParticle(vec2(x, y));
-	}
-	else 
-	{
-		par.angle += random(vec2(x,y) + curTick);
-		par.velocity = CalculateVelocity(par.angle, 0.5, 0.1);
-		par.position += vec3(par.velocity, 0.0) * tickInterval;
-	}
+	//float fHeight = float(height);
+	//float fX = float(x);
+	//float fY = float(y);
+	//float scanfLineVelocity = 3.0 / fHeight;
 
-	particlesBuffer.particles[index] = par;
+	//uint index = x + y * height;
+	//curParticle = InitializeParticle(x, y);
+
+	//if (curParticle.state == _STATE_INIT_)
+	//{
+	//	//curParticle = InitializeParticle(x, y);
+	//}
+	//else 
+	//{
+	//	//curParticle.angle += random(vec2(fX,fY) + curTick);
+	//	//curParticle.velocity = CalculateVelocity(curParticle.angle, 0.5, 0.1);
+	//	//curParticle.position += vec3(curParticle.velocity, 0.0) * tickInterval * step(0.0, (passTick * scanfLineVelocity) - y);
+	//}
+
+	//if (curParticle.position.x < 1.0 && 
+	//	curParticle.position.y < 1.0) 
+	//{
+	//	uint particleIndex = atomicCounterIncrement(atomicCounter);
+	//	indicesBuffer.indices[particleIndex] = index;
+	//}
 }

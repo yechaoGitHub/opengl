@@ -1,5 +1,6 @@
 #include <QGuiApplication>
 #include "QtMainWindow.h"
+#include "ImageFade.h"
 
 int main(int argc, char *argv[])
 {

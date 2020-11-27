@@ -1,10 +1,14 @@
 #include "ParticleSystem.h"
 
+
+#define DEFAULT_PARTICLE_NUM 1024
+
 ParticleSystem::ParticleSystem() :
-	mGlParticleBuffer(0),
-	mGlParticleCount(0),
+	mGlParticlesBuffer(0),
+	mGlParticlesCount(0),
 	mParticleCount(0)
 {
+	
 }
 
 ParticleSystem::~ParticleSystem()
@@ -14,25 +18,35 @@ ParticleSystem::~ParticleSystem()
 
 bool ParticleSystem::Init()
 {
-	return initializeOpenGLFunctions();
+	bool b = initializeOpenGLFunctions();
+	assert(b);
+
+	GL_CHECK(glGenBuffers(1,&mGlParticlesBuffer));
+	GL_CHECK(glBindBuffer(GL_SHADER_STORAGE_BUFFER, mGlParticlesBuffer));
+	GL_CHECK(glBufferData(GL_SHADER_STORAGE_BUFFER, DEFAULT_PARTICLE_NUM * sizeof(Particle), nullptr, GL_DYNAMIC_COPY));
+	GL_CHECK(glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0));
+
+	return true;
 }
 
 void ParticleSystem::ShutDown()
 {
-	if (mGlParticleBuffer)
+	if (mGlParticlesBuffer)
 	{
-		glDeleteBuffers(1, &mGlParticleBuffer);
-		mGlParticleBuffer = 0;
+		GL_CHECK(glDeleteBuffers(1, &mGlParticlesBuffer));
+		mGlParticlesBuffer = 0;
 	}
 }
 
 bool ParticleSystem::SetComputerShader(const std::string& shaderPath)
 {
-	bool b = mComputeShaderProgram.addCacheableShaderFromSourceFile(QOpenGLShader::Compute, shaderPath.c_str());
+	bool b = mComputeShaderProgram.addShaderFromSourceFile(QOpenGLShader::Compute, shaderPath.c_str());
 	if (!b)
 	{
 		qDebug() << mComputeShaderProgram.log();
 	}
+
+	b = mComputeShaderProgram.link();
 
 	return b;
 }
@@ -40,20 +54,20 @@ bool ParticleSystem::SetComputerShader(const std::string& shaderPath)
 void ParticleSystem::AddParticle(const Particle& particle)
 {
 	mParticleCount++;
-	if (mParticleCount > mGlParticleCount) 
+	if (mParticleCount > mGlParticlesCount) 
 	{
-		mGlParticleCount = mParticleCount * 1.5;
+		mGlParticlesCount = mParticleCount * 1.5;
 		GLuint newBuffer(0);
 
 		Particle* particles = Map();
-		glGenBuffers(GL_SHADER_STORAGE_BUFFER, &newBuffer);
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, newBuffer);
-		glBufferData(GL_SHADER_STORAGE_BUFFER, mGlParticleCount, nullptr, GL_DYNAMIC_COPY);
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, mParticleCount, particles);
+		GL_CHECK(glGenBuffers(1, &newBuffer));
+		GL_CHECK(glBindBuffer(GL_SHADER_STORAGE_BUFFER, newBuffer));
+		GL_CHECK(glBufferData(GL_SHADER_STORAGE_BUFFER, mGlParticlesCount, nullptr, GL_DYNAMIC_COPY));
+		GL_CHECK(glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, mParticleCount, particles));
 		Unmap();
 
-		glDeleteBuffers(GL_SHADER_STORAGE_BUFFER, &mGlParticleBuffer);
-		mGlParticleBuffer = newBuffer;
+		GL_CHECK(glDeleteBuffers(GL_SHADER_STORAGE_BUFFER, &mGlParticlesBuffer));
+		mGlParticlesBuffer = newBuffer;
 	}
 
 	Particle* particles = Map();
@@ -63,23 +77,28 @@ void ParticleSystem::AddParticle(const Particle& particle)
 void ParticleSystem::ResetParticles(uint32_t nums)
 {
 	mParticleCount = nums;
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mGlParticleBuffer);
-	if (mParticleCount <= mGlParticleCount)
+	GL_CHECK(glBindBuffer(GL_SHADER_STORAGE_BUFFER, mGlParticlesBuffer));
+	if (mParticleCount <= mGlParticlesCount)
 	{
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, mParticleCount * sizeof(Particle), nullptr);
+		GL_CHECK(glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, mParticleCount * sizeof(Particle), nullptr));
 	}
 	else
 	{
-		mGlParticleCount = mParticleCount * 1.5;
-		glBufferData(GL_SHADER_STORAGE_BUFFER, mGlParticleCount * sizeof(Particle), nullptr, GL_DYNAMIC_COPY);
+		mGlParticlesCount = mParticleCount * 1.5;
+		GL_CHECK(glBufferData(GL_SHADER_STORAGE_BUFFER, mGlParticlesCount * sizeof(Particle), nullptr, GL_DYNAMIC_COPY));
 	}
 
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	GL_CHECK(glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0));
 }
 
 uint32_t ParticleSystem::ParticlesCount()
 {
 	return mParticleCount;
+}
+
+uint32_t ParticleSystem::ParticleCapacity()
+{
+	return mGlParticlesCount;
 }
 
 void ParticleSystem::Compute()
@@ -94,23 +113,32 @@ GLuint ParticleSystem::ProgrmaID()
 
 void ParticleSystem::UseProgrma()
 {
+	bool b = mComputeShaderProgram.bind();
+	assert(b);
 }
 
 void ParticleSystem::ReleaseProgma()
 {
+	mComputeShaderProgram.release();
+}
+
+GLuint ParticleSystem::GlPraticlesBuffer()
+{
+	return mGlParticlesBuffer;
 }
 
 Particle* ParticleSystem::Map()
 {
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mGlParticleBuffer);
+	GL_CHECK(glBindBuffer(GL_SHADER_STORAGE_BUFFER, mGlParticlesBuffer));
 	Particle* ret = reinterpret_cast<Particle*>(glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE));
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	assert(!glGetError());
+	GL_CHECK(glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0));
 	return ret;
 }
 
 void ParticleSystem::Unmap()
 {
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mGlParticleBuffer);
-	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	GL_CHECK(glBindBuffer(GL_SHADER_STORAGE_BUFFER, mGlParticlesBuffer));
+	GL_CHECK(glUnmapBuffer(GL_SHADER_STORAGE_BUFFER));
+	GL_CHECK(glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0));
 }

@@ -5,10 +5,10 @@
 #include <QOpenGLFunctions_4_3_Core>
 #include <QOpenGLShaderProgram>
 #include "GlTimer.h"
-#include "ParticleSystem.h"
+#include "ImageFade.h"
 #include "ui_QtOpengl.h"
 
-class QtOpengl : public QOpenGLWidget, public QOpenGLFunctions_4_3_Core
+class QtOpengl : public QOpenGLWidget, protected QOpenGLFunctions_4_3_Core
 {
 	Q_OBJECT
 
@@ -23,11 +23,11 @@ protected:
 	void mousePressEvent(QMouseEvent* e) override;
 
 private:
-	Ui::QtOpengl			ui;
-	GlTimer					mTimer;
-	ParticleSystem			mParticleSys;
-	GLuint					mVAO, mVBO, mTex, mImageVAO, mImageVBO, mImageEBO;
-	QOpenGLShaderProgram	mShaderProgram;
-	QOpenGLShaderProgram	mImageProgram;
-
+	Ui::QtOpengl				ui;
+	ImageFade					mImageFade;
+	QOpenGLFunctions_4_3_Core*	mGlFunction;
+	GlTimer						mTimer;
+	GLuint						mVAO, mVBO, mTex, mImageVAO, mImageVBO, mImageEBO;
+	QOpenGLShaderProgram		mShaderProgram;
+	QOpenGLShaderProgram		mImageProgram;
 };

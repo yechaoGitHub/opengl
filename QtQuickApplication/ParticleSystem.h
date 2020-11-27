@@ -1,11 +1,12 @@
 #pragma once
 #include "Particle.h"
+#include <QOpenGLContext>
 #include <QOpenGLFunctions_4_3_Core>
 #include <QOpenGLShaderProgram>
 #include <vector>
 #include <string>
 
-class ParticleSystem : public QOpenGLFunctions_4_3_Core
+class ParticleSystem : protected QOpenGLFunctions_4_3_Core
 {
 public:
 	ParticleSystem();
@@ -16,18 +17,22 @@ public:
 	virtual bool SetComputerShader(const std::string& shaderPath);
 	virtual void AddParticle(const Particle& particle);
 	virtual void ResetParticles(uint32_t nums);
-	virtual uint32_t ParticlesCount();
+	uint32_t ParticlesCount();
+	uint32_t ParticleCapacity();
 	virtual void Compute();
-	virtual Particle* Map();
-	virtual void Unmap();
+	Particle* Map();
+	void Unmap();
 
 	GLuint ProgrmaID();
 	void UseProgrma();
 	void ReleaseProgma();
+	GLuint GlPraticlesBuffer();
 
 private:
-	QOpenGLShaderProgram	mComputeShaderProgram;
-	GLuint					mGlParticleBuffer;
-	uint32_t				mGlParticleCount;
-	uint32_t				mParticleCount;
+	QOpenGLShaderProgram		mComputeShaderProgram;
+	GLuint						mGlParticlesBuffer;
+	uint32_t					mGlParticlesCount;
+	uint32_t					mParticleCount;
 };
+
+#define GL_CHECK(FuncCall)    FuncCall; assert(!glGetError())
