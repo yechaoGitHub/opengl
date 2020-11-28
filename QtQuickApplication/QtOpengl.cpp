@@ -1,16 +1,15 @@
 #include "QtOpengl.h"
 
 float vertices[] = {
-	// positions          // colors           // texture coords
-	 0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,	// top right
-	 0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,	// bottom right
-	-0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,	// bottom left
-	-0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f	// top left 
+	 0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,	
+	 0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,	
+	-0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,	
+	-0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f	
 };
 
 unsigned int indices[] = {
-	0, 1, 3, // first triangle
-	1, 2, 3  // second triangle
+	0, 1, 3, 
+	1, 2, 3  
 };
 
 QtOpengl::QtOpengl(QWidget *parent)
@@ -61,7 +60,7 @@ void QtOpengl::initializeGL()
 
 	mImageFade.Init();
 	mImageFade.SetComputerShader("ImageFade.glsl");
-	mImageFade.SetSize(img.size().width(), img.size().height());
+	mImageFade.SetSize(100, 100);
 	mImageFade.Compute();
 
 	Particle* particles = mImageFade.Map();
@@ -75,14 +74,16 @@ void QtOpengl::initializeGL()
 
 	GL_CHECK(glBufferData(GL_ARRAY_BUFFER, parBufferSize, particles, GL_STATIC_DRAW));
 	GL_CHECK(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)STRUCT_MEMBER_OFFSET(Particle, position)));
-	GL_CHECK(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)STRUCT_MEMBER_OFFSET(Particle, velocity)));
-	GL_CHECK(glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)STRUCT_MEMBER_OFFSET(Particle, acceleration)));
-	GL_CHECK(glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)STRUCT_MEMBER_OFFSET(Particle, color)));
+	GL_CHECK(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)STRUCT_MEMBER_OFFSET(Particle, coordinate)));
+	GL_CHECK(glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)STRUCT_MEMBER_OFFSET(Particle, velocity)));
+	GL_CHECK(glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)STRUCT_MEMBER_OFFSET(Particle, acceleration)));
+	GL_CHECK(glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)STRUCT_MEMBER_OFFSET(Particle, color)));
 
 	GL_CHECK(glEnableVertexAttribArray(0));
 	GL_CHECK(glEnableVertexAttribArray(1));
 	GL_CHECK(glEnableVertexAttribArray(2));
 	GL_CHECK(glEnableVertexAttribArray(3));
+	GL_CHECK(glEnableVertexAttribArray(4));
 
 	GL_CHECK(glBindVertexArray(0));
 	GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
@@ -95,13 +96,17 @@ void QtOpengl::initializeGL()
 	GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 	GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img.size().width(), img.size().height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, img.bits()));
 
+	mImageProgram.bind();
 	GLint texLoc = glGetUniformLocation(mImageProgram.programId(), "tex");
-	assert(glGetError() != 0);
+	assert(!glGetError());
 	GL_CHECK(glUniform1i(texLoc, 0));
+	mImageProgram.release();
 
+	mShaderProgram.bind();
 	GLint shTextLoc = glGetUniformLocation(mShaderProgram.programId(), "tex");
-	assert(glGetError() != 0);
+	assert(!glGetError());
 	GL_CHECK(glUniform1i(shTextLoc, 0));
+	mShaderProgram.release();
 
 	GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
 
@@ -131,6 +136,8 @@ void QtOpengl::initializeGL()
 	GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
 	GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 
+	mTimer.Start();
+	mImageFade.SetStartTime(mTimer.Now());
 }
 
 void QtOpengl::resizeGL(int w, int h)
@@ -143,26 +150,28 @@ void QtOpengl::paintGL()
 	GL_CHECK(glClearColor(1.f, 1.f, 1.f, 1.f));
 	GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
 	
-	//mImageFade.Compute();
+	mImageFade.SetCurrentTime(mTimer.Now());
+
+	mImageFade.Compute();
 	Particle* particles = mImageFade.Map();
 	uint32_t parCount = mImageFade.ParticlesCount();
 	uint32_t parBufferSize = parCount * sizeof(Particle);
 
-	mImageProgram.bind();
+	//mImageProgram.bind();
 
-	GL_CHECK(glBindVertexArray(mImageVAO));
-	GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mImageEBO));
+	//GL_CHECK(glBindVertexArray(mImageVAO));
+	//GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mImageEBO));
 
-	GL_CHECK(glBindTexture(GL_TEXTURE_2D, mTex));
+	//GL_CHECK(glBindTexture(GL_TEXTURE_2D, mTex));
 
-	GLint imTexLoc = glGetUniformLocation(mImageProgram.programId(), "tex");
-	assert(glGetError() != 0);
-	GL_CHECK(glUniform1i(imTexLoc, 0));
-	GL_CHECK(glActiveTexture(GL_TEXTURE0));
+	//GLint imTexLoc = glGetUniformLocation(mImageProgram.programId(), "tex");
+	//assert(!glGetError());
+	//GL_CHECK(glUniform1i(imTexLoc, 0));
+	//GL_CHECK(glActiveTexture(GL_TEXTURE0));
 
-	GL_CHECK(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
+	//GL_CHECK(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
 
-	mImageProgram.release();
+	//mImageProgram.release();
 
 	GL_CHECK(glBindVertexArray(mVAO));
 	GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, mVBO));
@@ -172,11 +181,11 @@ void QtOpengl::paintGL()
 
 	GL_CHECK(glBindTexture(GL_TEXTURE_2D, mTex));
 	GLint shTexLoc = glGetUniformLocation(mShaderProgram.programId(), "tex");
-	assert(glGetError() != 0);
+	assert(!glGetError());
 	GL_CHECK(glUniform1i(shTexLoc, 0));
 	GL_CHECK(glActiveTexture(GL_TEXTURE0));
 
-	GL_CHECK(glPointSize(2.0f));
+	GL_CHECK(glPointSize(5.0f));
 	GL_CHECK(glDrawArrays(GL_POINTS, 0, mImageFade.ParticlesCount()));
 	
 	mShaderProgram.release();

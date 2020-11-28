@@ -8,14 +8,15 @@ public:
 	Particle();
 	~Particle();
 
-	__declspec(align(16)) glm::vec3 position;
-	__declspec(align(16)) glm::vec3 velocity;
-	__declspec(align(16)) glm::vec3 acceleration;
-	__declspec(align(16)) glm::vec3 color;
-	float							age;
-	float							life;
-	float							size;
-	float							angle;
-	uint32_t						state;
+	ALIGN(16)	glm::vec3 position;
+	ALIGN(16)	glm::vec3 coordinate;
+	ALIGN(16)	glm::vec3 velocity;
+	ALIGN(16)	glm::vec3 acceleration;
+	ALIGN(16)	glm::vec3 color;
+	float		age;
+	float		life;
+	float		size;
+	float		angle;
+	uint32_t	state;
 };
 

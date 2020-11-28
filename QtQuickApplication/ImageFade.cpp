@@ -46,22 +46,19 @@ void ImageFade::SetSize(int32_t width, int32_t height)
 	mWidth = width;
 	mHeight = height;
 
+	UseProgrma();
+	
 	GLint heightLoc = glGetUniformLocation(ProgrmaID(), "height");
 	assert(!glGetError());
 
 	GLint widthLoc = glGetUniformLocation(ProgrmaID(), "width");
 	assert(!glGetError());
 
-	if (widthLoc != -1) 
-	{
-		GL_CHECK(glUniform1ui(widthLoc, mWidth));
-	}
+	GL_CHECK(glUniform1ui(widthLoc, mWidth));
+	GL_CHECK(glUniform1ui(heightLoc, mHeight));
 	
-	if (heightLoc != -1) 
-	{
-		GL_CHECK(glUniform1ui(heightLoc, mHeight));
-	}
-	
+	ReleaseProgma();
+
 	ResetParticles(width * height);
 }
 
@@ -70,9 +67,11 @@ void ImageFade::SetCurrentTime(float time)
 	mCurTick = time;
 
 	GLint curTickLoc = glGetUniformLocation(ProgrmaID(), "curTick");
-	assert(glGetError() != 0);
+	assert(!glGetError());
 
+	UseProgrma();
 	GL_CHECK(glUniform1f(curTickLoc, mCurTick));
+	ReleaseProgma();
 }
 
 void ImageFade::SetStartTime(float time)
@@ -80,9 +79,11 @@ void ImageFade::SetStartTime(float time)
 	mStartTick = time;
 
 	GLint startTickLoc = glGetUniformLocation(ProgrmaID(), "startTick");
-	assert(glGetError() != 0);
+	assert(!glGetError());
 
+	UseProgrma();
 	GL_CHECK(glUniform1f(startTickLoc, mCurTick));
+	ReleaseProgma();
 }
 
 void ImageFade::Compute()
@@ -102,31 +103,30 @@ void ImageFade::Compute()
 	GL_CHECK(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mGlIndexBuffer));
 	GL_CHECK(glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0));
 
-	uint32_t zero(10);
+	uint32_t zero(0);
 	GL_CHECK(glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, mGlAtomicCounter));
 	GL_CHECK(glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(uint32_t), &zero));
 	GL_CHECK(glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 2, mGlAtomicCounter));
 	GL_CHECK(glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0));
 
-	//GLint widthLoc = glGetUniformLocation(ProgrmaID(), "width");
-	//assert(!glGetError());
-	//GL_CHECK(glUniform1ui(widthLoc, mWidth));
-	//
-	//GLint heightLoc = glGetUniformLocation(ProgrmaID(), "height");
-	//assert(!glGetError());
-	//GL_CHECK(glUniform1ui(heightLoc, mHeight));
+	GLint widthLoc = glGetUniformLocation(ProgrmaID(), "width");
+	assert(!glGetError());
+	GL_CHECK(glUniform1ui(widthLoc, mWidth));
+	
+	GLint heightLoc = glGetUniformLocation(ProgrmaID(), "height");
+	assert(!glGetError());
+	GL_CHECK(glUniform1ui(heightLoc, mHeight));
 
 	uint32_t x = ::ceil(mWidth/32.0);
 	uint32_t y = ::ceil(mHeight/32.0);
-	GL_CHECK(glDispatchCompute(x, y, 0));
+	GL_CHECK(glDispatchCompute(x, y, 1));
 
-	GL_CHECK(glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, mGlAtomicCounter));
-	uint32_t *counter = reinterpret_cast<uint32_t*>(glMapBuffer(GL_ATOMIC_COUNTER_BUFFER, GL_READ_WRITE));
-	assert(!glGetError());
-	GL_CHECK(glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER));
-	GL_CHECK(glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0));
+	//GL_CHECK(glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, mGlAtomicCounter));
+	//uint32_t *counter = reinterpret_cast<uint32_t*>(glMapBuffer(GL_ATOMIC_COUNTER_BUFFER, GL_READ_WRITE));
+	//assert(!glGetError());
+	//GL_CHECK(glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER));
+	//GL_CHECK(glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0));
 
-	auto *par = Map();
 	GLint preTickLoc = glGetUniformLocation(ProgrmaID(), "preTick");
 	GL_CHECK(glUniform1f(preTickLoc, mCurTick));
 
